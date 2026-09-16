@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ScamGo - Scam Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7fb;
+      color: #1f2937;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 25px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #d1d5db;
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 35px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .progress {
+      color: #6b7280;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    .message-box {
+      background: #f9fafb;
+      border: 2px solid #d1d5db;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .instruction {
+      color: #6b7280;
+      margin-bottom: 15px;
+    }
+
+    .options {
+      display: flex;
+      gap: 12px;
+    }
+
+    .option {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .scam-button {
+      background: #dc2626;
+    }
+
+    .safe-button {
+      background: #16a34a;
+    }
+
+    .option:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #feedback {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      line-height: 1.6;
+    }
+
+    .correct {
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+    }
+
+    .wrong {
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+    }
+
+    .next-button,
+    .restart-button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #final {
+      display: none;
+      text-align: center;
+    }
+
+    .score {
+      font-size: 42px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .tip {
+      margin-top: 25px;
+      padding: 15px;
+      background: #eff6ff;
+      border-radius: 12px;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      color: #6b7280;
+      padding: 25px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .options {
+        flex-direction: column;
+      }
+
+      header h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🛡️ ScamGo</h1>
+    <p>Scam Awareness Quiz</p>
+  </header>
+
+  <div class="container">
+
+    <div class="card" id="quiz">
+
+      <div class="progress" id="progress">
+        Question 1 of 5
+      </div>
+
+      <h2>🔍 Observe the message</h2>
+
+      <p class="instruction">
+        Read the message carefully and decide whether it is a scam or not.
+      </p>
+
+      <div class="message-box" id="message">
+        Loading...
+      </div>
+
+      <div class="options">
+
+        <button
+          class="option scam-button"
+          id="scamButton"
+          onclick="answer('scam')">
+          🚨 Scam
+        </button>
+
+        <button
+          class="option safe-button"
+          id="safeButton"
+          onclick="answer('safe')">
+          ✅ Not a Scam
+        </button>
+
+      </div>
+
+      <div id="feedback"></div>
+
+      <button
+        class="next-button"
+        id="nextButton"
+        onclick="nextQuestion()"
+        style="display:none;">
+        Next Question →
+      </button>
+
+      <div class="tip">
+        💡 <b>Tip:</b> Always check the sender, links, requests for personal information, and urgent messages carefully.
+      </div>
+
+    </div>
+
+
+    <div class="card" id="final">
+
+      <h2>🎉 Quiz Complete!</h2>
+
+      <p>You scored:</p>
+
+      <div class="score" id="score">
+        0 / 5
+      </div>
+
+      <p id="resultMessage"></p>
+
+      <button
+        class="restart-button"
+        onclick="restartQuiz()">
+        🔄 Play Again
+      </button>
+
+    </div>
+
+  </div>
+
+  <footer>
+    ScamGo © 2026 | Stay alert, stay safe.
+  </footer>
+
+
+  <script>
+
+    /*
+      Question bank
+    */
+
+    const questionBank = [
+
+      {
+        message:
+          "URGENT! Your bank account will be blocked today. Click this link immediately to verify your account: http://example-link.com",
+
+        answer: "scam",
+
+        explanation:
+          "This message uses urgent language, threatens account blocking, and asks you to click a suspicious link."
+      },
+
+      {
+        message:
+          "Hi! Don't forget to bring your Geography textbook tomorrow. We have class as usual.",
+
+        answer: "safe",
+
+        explanation:
+          "This message does not ask for money, passwords, OTPs, or suspicious links."
+      },
+
+      {
+        message:
+          "Congratulations! You have won RM1,000! Send your OTP and bank details to claim your prize now.",
+
+        answer: "scam",
+
+        explanation:
+          "The message promises a prize and asks for sensitive information such as an OTP and bank details."
+      },
+
+      {
+        message:
+          "Your library book is due tomorrow. Please return it to the school library during recess.",
+
+        answer: "safe",
+
+        explanation:
+          "This is a normal reminder and does not contain common scam warning signs."
+      },
+
+      {
+        message:
+          "You have received a refund of RM250. Click the link below and enter your password to receive the money.",
+
+        answer: "scam",
+
+        explanation:
+          "The message asks for a password and encourages the user to click a link to receive money."
+      },
+
+      {
+        message:
+          "Reminder: The school meeting will start at 2:00 PM in the hall. Please arrive 10 minutes early.",
+
+        answer: "safe",
+
+        explanation:
+          "This is a normal school announcement and does not request sensitive information."
+      },
+
+      {
+        message:
+          "Your account has unusual activity. Verify your identity immediately by clicking this link and entering your PIN.",
+
+        answer: "scam",
+
+        explanation:
+          "The message creates urgency and asks for a PIN through a link."
+      },
+
+      {
+        message:
+          "Hey! Are you free to study together after school today?",
+
+        answer: "safe",
+
+        explanation:
+          "This is a normal personal message without suspicious requests."
+      },
+
+      {
+        message:
+          "FREE RM500 voucher! Limited time only! Click the link now before your reward expires!",
+
+        answer: "scam",
+
+        explanation:
+          "The message uses a tempting free reward, urgency, and a link to encourage immediate action."
+      },
+
+      {
+        message:
+          "Your teacher has uploaded today's homework. Please check your class group for the instructions.",
+
+        answer: "safe",
+
+        explanation:
+          "This is a normal school-related message and does not request sensitive information."
+      }
+
+    ];
+
+
+    let questions = [];
+    let currentQuestion = 0;
+    let score = 0;
+
+
+    /*
+      Shuffle questions
+    */
+
+    function shuffle(array) {
+
+      return array.sort(() => Math.random() - 0.5);
+
+    }
+
+
+    /*
+      Start quiz
+    */
+
+    function startQuiz() {
+
+      questions = shuffle([...questionBank]).slice(0, 5);
+
+      currentQuestion = 0;
+      score = 0;
+
+      document.getElementById("quiz").style.display = "block";
+      document.getElementById("final").style.display = "none";
+
+      showQuestion();
+
+    }
+
+
+    /*
+      Show question
+    */
+
+    function showQuestion() {
+
+      const question = questions[currentQuestion];
+
+      document.getElementById("progress").textContent =
+        "Question " + (currentQuestion + 1) + " of 5";
+
+      document.getElementById("message").textContent =
+        question.message;
+
+      document.getElementById("feedback").style.display = "none";
+
+      document.getElementById("nextButton").style.display = "none";
+
+      document.getElementById("scamButton").disabled = false;
+
+      document.getElementById("safeButton").disabled = false;
+
+    }
+
+
+    /*
+      Check answer
+    */
+
+    function answer(userAnswer) {
+
+      const question = questions[currentQuestion];
+
+      const feedback = document.getElementById("feedback");
+
+      const scamButton = document.getElementById("scamButton");
+
+      const safeButton = document.getElementById("safeButton");
+
+      scamButton.disabled = true;
+      safeButton.disabled = true;
+
+      feedback.style.display = "block";
+
+
+      if (userAnswer === question.answer) {
+
+        score++;
+
+        feedback.className = "correct";
+
+        feedback.innerHTML =
+          "<b>✅ Correct!</b><br>" +
+          question.explanation;
+
+      }
+
+      else {
+
+        feedback.className = "wrong";
+
+        feedback.innerHTML =
+          "<b>❌ Not quite!</b><br>" +
+          "The correct answer is <b>" +
+          (question.answer === "scam"
+            ? "🚨 Scam"
+            : "✅ Not a Scam") +
+          "</b>.<br><br>" +
+          question.explanation;
+
+      }
+
+
+      document.getElementById("nextButton").style.display = "block";
+
+    }
+
+
+    /*
+      Next question
+    */
+
+    function nextQuestion() {
+
+      currentQuestion++;
+
+      if (currentQuestion < 5) {
+
+        showQuestion();
+
+      }
+
+      else {
+
+        showFinal();
+
+      }
+
+    }
+
+
+    /*
+      Final score
+    */
+
+    function showFinal() {
+
+      document.getElementById("quiz").style.display = "none";
+
+      document.getElementById("final").style.display = "block";
+
+      document.getElementById("score").textContent =
+        score + " / 5";
+
+
+      let message = "";
+
+      if (score === 5) {
+
+        message =
+          "🏆 Excellent! You spotted all the warning signs.";
+
+      }
+
+      else if (score >= 3) {
+
+        message =
+          "👏 Good job! Keep practicing your scam awareness skills.";
+
+      }
+
+      else {
+
+        message =
+          "💡 Keep practicing! Always observe messages carefully before taking action.";
+
+      }
+
+
+      document.getElementById("resultMessage").textContent =
+        message;
+
+    }
+
+
+    /*
+      Restart quiz
+    */
+
+    function restartQuiz() {
+
+      startQuiz();
+
+    }
+
+
+    /*
+      Start automatically
+    */
+
+    startQuiz();
+
+  </script>
+
+</body>
+</html>
